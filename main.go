@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/phinexdaz/ipapk-server/conf"
-	"github.com/phinexdaz/ipapk-server/middleware"
+	"github.com/phinexdaz/ipapk-server/api"
 	"github.com/phinexdaz/ipapk-server/models"
 	"github.com/phinexdaz/ipapk-server/templates"
 	"github.com/phinexdaz/ipapk-server/utils"
@@ -41,20 +41,22 @@ func main() {
 	router.SetFuncMap(templates.TplFuncMap)
 	router.LoadHTMLGlob("public/views/*")
 
-	router.Static("app", ".data")
+	router.Static("app", ".data/app")
+	router.Static("icon", ".data/icon")
 	router.Static("static", "public/static")
 	router.StaticFile("myCA.cer", ".ca/myCA.cer")
 
-	router.POST("/upload", middleware.Upload)
-	router.GET("/bundle/:uuid", middleware.GetBundle)
-	router.GET("/log/:uuid", middleware.GetChangelog)
-	router.GET("/qrcode/:uuid", middleware.GetQRCode)
-	router.GET("/icon/:uuid", middleware.GetIcon)
-	router.GET("/plist/:uuid", middleware.GetPlist)
-	router.GET("/ipa/:uuid", middleware.DownloadAPP)
-	router.GET("/apk/:uuid", middleware.DownloadAPP)
-	router.GET("/version/:uuid", middleware.GetVersions)
-	router.GET("/version/:uuid/:ver", middleware.GetBuilds)
+	router.POST("/upload", api.Upload)
+	bundle := router.Group("/bundle")
+	{
+		bundle.GET("/:uuid", api.GetBundle)
+		bundle.GET("/:uuid/changelog", api.GetChangelog)
+		bundle.GET("/:uuid/qrcode", api.GetQRCode)
+		bundle.GET("/:uuid/plist", api.GetPlist)
+		bundle.GET("/:uuid/download", api.DownloadAPP)
+		bundle.GET("/:uuid/versions", api.GetVersions)
+		bundle.GET("/:uuid/versions/:version", api.GetBuilds)
+	}
 
 	srv := &http.Server{
 		Addr:    conf.AppConfig.Addr(),

@@ -1,4 +1,4 @@
-package middleware
+package api
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"github.com/phinexdaz/ipapk-server/conf"
 	"github.com/phinexdaz/ipapk-server/models"
 	"github.com/phinexdaz/ipapk-server/serializers"
+	"github.com/phinexdaz/ipapk-server/utils"
 	"github.com/satori/go.uuid"
 	"image/png"
 	"net/http"
@@ -30,7 +31,7 @@ func Upload(c *gin.Context) {
 	}
 
 	_uuid := uuid.NewV4().String()
-	filename := filepath.Join(".data", _uuid+string(ext.PlatformType().Extention()))
+	filename := utils.GetAppPath(_uuid + string(ext.PlatformType().Extention()))
 
 	if err := c.SaveUploadedFile(file, filename); err != nil {
 		return
@@ -41,8 +42,7 @@ func Upload(c *gin.Context) {
 		return
 	}
 
-	iconBuffer := new(bytes.Buffer)
-	if err := png.Encode(iconBuffer, app.Icon); err != nil {
+	if err := utils.SaveIcon(app.Icon, _uuid+".png"); err != nil {
 		return
 	}
 
@@ -54,7 +54,6 @@ func Upload(c *gin.Context) {
 	bundle.Version = app.Version
 	bundle.Build = app.Build
 	bundle.Size = app.Size
-	bundle.Icon = iconBuffer.Bytes()
 	bundle.ChangeLog = changelog
 
 	if err := models.AddBundle(bundle); err != nil {
@@ -69,8 +68,8 @@ func Upload(c *gin.Context) {
 		Version:    bundle.Version,
 		Build:      bundle.Build,
 		InstallUrl: bundle.GetInstallUrl(conf.AppConfig.ProxyURL()),
-		QRCodeUrl:  conf.AppConfig.ProxyURL() + "/qrcode/" + _uuid,
-		IconUrl:    conf.AppConfig.ProxyURL() + "/icon/" + _uuid,
+		QRCodeUrl:  conf.AppConfig.ProxyURL() + bundle.GetQrCode(),
+		IconUrl:    conf.AppConfig.ProxyURL() + bundle.GetIcon(),
 		Changelog:  bundle.ChangeLog,
 		Downloads:  bundle.Downloads,
 	})
@@ -102,17 +101,6 @@ func GetQRCode(c *gin.Context) {
 	c.Data(http.StatusOK, "image/png", buf.Bytes())
 }
 
-func GetIcon(c *gin.Context) {
-	_uuid := c.Param("uuid")
-
-	bundle, err := models.GetBundleByUID(_uuid)
-	if err != nil {
-		return
-	}
-
-	c.Data(http.StatusOK, "image/png", bundle.Icon)
-}
-
 func GetChangelog(c *gin.Context) {
 	_uuid := c.Param("uuid")
 
@@ -137,8 +125,8 @@ func GetBundle(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"bundle":     bundle,
 		"installUrl": bundle.GetInstallUrl(conf.AppConfig.ProxyURL()),
-		"qrCodeUrl":  conf.AppConfig.ProxyURL() + "/qrcode/" + bundle.UUID,
-		"iconUrl":    conf.AppConfig.ProxyURL() + "/icon/" + bundle.UUID,
+		"qrCodeUrl":  conf.AppConfig.ProxyURL() + bundle.GetQrCode(),
+		"iconUrl":    conf.AppConfig.ProxyURL() + bundle.GetIcon(),
 	})
 }
 
@@ -163,7 +151,7 @@ func GetVersions(c *gin.Context) {
 
 func GetBuilds(c *gin.Context) {
 	_uuid := c.Param("uuid")
-	version := c.Param("ver")
+	version := c.Param("version")
 
 	bundle, err := models.GetBundleByUID(_uuid)
 	if err != nil {
@@ -185,9 +173,9 @@ func GetBuilds(c *gin.Context) {
 			Version:    v.Version,
 			Build:      v.Build,
 			InstallUrl: v.GetInstallUrl(conf.AppConfig.ProxyURL()),
-			QRCodeUrl:  conf.AppConfig.ProxyURL() + "/qrcode/" + v.UUID,
-			IconUrl:    conf.AppConfig.ProxyURL() + "/icon/" + v.UUID,
-			Changelog:  bundle.ChangeLog,
+			QRCodeUrl:  conf.AppConfig.ProxyURL() + v.GetQrCode(),
+			IconUrl:    conf.AppConfig.ProxyURL() + v.GetIcon(),
+			Changelog:  v.ChangeLog,
 			Downloads:  v.Downloads,
 		})
 	}
@@ -209,7 +197,7 @@ func GetPlist(c *gin.Context) {
 		return
 	}
 
-	ipaUrl := conf.AppConfig.ProxyURL() + "/ipa/" + bundle.UUID
+	ipaUrl := conf.AppConfig.ProxyURL() + "/bundle/" + bundle.UUID + "/download"
 
 	data, err := models.NewPlist(bundle.Name, bundle.Version, bundle.BundleId, ipaUrl).Marshall()
 	if err != nil {
@@ -229,6 +217,6 @@ func DownloadAPP(c *gin.Context) {
 
 	bundle.UpdateDownload()
 
-	downloadUrl := conf.AppConfig.ProxyURL() + "/app/" + bundle.UUID + string(bundle.PlatformType.Extention())
+	downloadUrl := conf.AppConfig.ProxyURL() + bundle.GetApp()
 	c.Redirect(http.StatusMovedPermanently, downloadUrl)
 }

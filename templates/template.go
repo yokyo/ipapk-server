@@ -19,7 +19,16 @@ func formatBinary(size int64) string {
 }
 
 func formatLog(logs string) []string {
-	out := strings.Split(logs, "\\n")
+	var out []string
+
+	if strings.Count(logs, "\\n") > 0 {
+		out = strings.Split(logs, "\\n")
+	} else if strings.Count(logs, "\n") > 0 {
+		out = strings.Split(logs, "\n")
+	} else {
+		out = append(out, logs)
+	}
+
 	return out
 }
 

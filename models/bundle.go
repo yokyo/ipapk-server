@@ -71,8 +71,7 @@ type Bundle struct {
 	Version      string
 	Build        string
 	Size         int64
-	Icon         []byte
-	ChangeLog    string `gorm:"type:text"`
+	ChangeLog    string `gorm:"column:changelog;type:text"`
 	Downloads    uint64 `gorm:"default:0"`
 	CreatedAt    time.Time
 }
@@ -91,16 +90,6 @@ func GetBundleByUID(uuid string) (*Bundle, error) {
 func (bundle *Bundle) UpdateBundle(field string, value interface{}) error {
 	err := orm.Model(&bundle).Update(field, value).Error
 	return err
-}
-
-func (bundle *Bundle) GetInstallUrl(baseUrl string) string {
-	var out string
-	if bundle.PlatformType == BundlePlatformTypeAndroid {
-		out = baseUrl + "/apk/" + bundle.UUID
-	} else if bundle.PlatformType == BundlePlatformTypeIOS {
-		out = "itms-services://?action=download-manifest&url=" + baseUrl + "/plist/" + bundle.UUID
-	}
-	return out
 }
 
 func (bundle *Bundle) UpdateDownload() {
@@ -140,4 +129,26 @@ func (bundle *Bundle) GetBuilds(version string) ([]*Bundle, error) {
 		Group("build").Order("build DESC").Find(&bundles).Error
 
 	return bundles, err
+}
+
+func (bundle *Bundle) GetInstallUrl(baseUrl string) string {
+	var out string
+	if bundle.PlatformType == BundlePlatformTypeAndroid {
+		out = baseUrl + "/bundle/" + bundle.UUID + "/download"
+	} else if bundle.PlatformType == BundlePlatformTypeIOS {
+		out = "itms-services://?action=download-manifest&url=" + baseUrl + "/bundle/" + bundle.UUID + "/plist"
+	}
+	return out
+}
+
+func (bundle *Bundle) GetQrCode() string {
+	return "/bundle/" + bundle.UUID + "/qrcode"
+}
+
+func (bundle *Bundle) GetApp() string {
+	return "/app/" + bundle.UUID + string(bundle.PlatformType.Extention())
+}
+
+func (bundle *Bundle) GetIcon() string {
+	return "/icon/" + bundle.UUID + ".png"
 }

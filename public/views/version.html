@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <meta name="format-detection" content="telephone=no">
     <title>内测应用分发服务</title>
     <!-- 引入 WeUI -->
     <link rel="stylesheet" href="//res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css"/>
@@ -13,7 +14,7 @@
         <div class="weui-cells__title">历史版本</div>
         <div class="weui-cells">
             {{ range .versions }}
-            <a class="weui-cell weui-cell_access" href="/version/{{ $.uuid }}/{{ .Version }}">
+            <a class="weui-cell weui-cell_access" href="/bundle/{{ $.uuid }}/versions/{{ .Version }}">
                 <div class="weui-cell__bd">
                     <p>{{ .Version }}</p>
                 </div>
