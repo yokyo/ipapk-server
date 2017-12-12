@@ -64,7 +64,7 @@ func (platformType BundlePlatformType) String() string {
 
 type Bundle struct {
 	ID           uint   `gorm:"primary_key"`
-	UUID         string `gorm:"unique_index"`
+	UUID         string `gorm:"type:varchar(9);unique_index"`
 	PlatformType BundlePlatformType
 	Name         string
 	BundleId     string

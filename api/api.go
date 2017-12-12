@@ -3,6 +3,11 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"image/png"
+	"net/http"
+	"path/filepath"
+	"time"
+
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
 	"github.com/gin-gonic/gin"
@@ -11,11 +16,7 @@ import (
 	"github.com/phinexdaz/ipapk-server/models"
 	"github.com/phinexdaz/ipapk-server/serializers"
 	"github.com/phinexdaz/ipapk-server/utils"
-	"github.com/satori/go.uuid"
-	"image/png"
-	"net/http"
-	"path/filepath"
-	"time"
+	"github.com/teris-io/shortid"
 )
 
 func Upload(c *gin.Context) {
@@ -30,8 +31,12 @@ func Upload(c *gin.Context) {
 		return
 	}
 
-	_uuid := uuid.NewV4().String()
-	filename := utils.GetAppPath(_uuid + string(ext.PlatformType().Extention()))
+	uuid, err := shortid.Generate()
+	if err != nil {
+		return
+	}
+
+	filename := utils.GetAppPath(uuid + string(ext.PlatformType().Extention()))
 
 	if err := c.SaveUploadedFile(file, filename); err != nil {
 		return
@@ -42,12 +47,12 @@ func Upload(c *gin.Context) {
 		return
 	}
 
-	if err := utils.SaveIcon(app.Icon, _uuid+".png"); err != nil {
+	if err := utils.SaveIcon(app.Icon, uuid+".png"); err != nil {
 		return
 	}
 
 	bundle := new(models.Bundle)
-	bundle.UUID = _uuid
+	bundle.UUID = uuid
 	bundle.PlatformType = ext.PlatformType()
 	bundle.Name = app.Name
 	bundle.BundleId = app.BundleId
@@ -61,7 +66,7 @@ func Upload(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, &serializers.BundleJSON{
-		UUID:       _uuid,
+		UUID:       uuid,
 		Name:       bundle.Name,
 		Platform:   bundle.PlatformType.String(),
 		BundleId:   bundle.BundleId,
@@ -76,9 +81,9 @@ func Upload(c *gin.Context) {
 }
 
 func GetQRCode(c *gin.Context) {
-	_uuid := c.Param("uuid")
+	uuid := c.Param("uuid")
 
-	bundle, err := models.GetBundleByUID(_uuid)
+	bundle, err := models.GetBundleByUID(uuid)
 	if err != nil {
 		return
 	}
@@ -102,9 +107,9 @@ func GetQRCode(c *gin.Context) {
 }
 
 func GetChangelog(c *gin.Context) {
-	_uuid := c.Param("uuid")
+	uuid := c.Param("uuid")
 
-	bundle, err := models.GetBundleByUID(_uuid)
+	bundle, err := models.GetBundleByUID(uuid)
 	if err != nil {
 		return
 	}
@@ -115,9 +120,9 @@ func GetChangelog(c *gin.Context) {
 }
 
 func GetBundle(c *gin.Context) {
-	_uuid := c.Param("uuid")
+	uuid := c.Param("uuid")
 
-	bundle, err := models.GetBundleByUID(_uuid)
+	bundle, err := models.GetBundleByUID(uuid)
 	if err != nil {
 		return
 	}
@@ -131,9 +136,9 @@ func GetBundle(c *gin.Context) {
 }
 
 func GetVersions(c *gin.Context) {
-	_uuid := c.Param("uuid")
+	uuid := c.Param("uuid")
 
-	bundle, err := models.GetBundleByUID(_uuid)
+	bundle, err := models.GetBundleByUID(uuid)
 	if err != nil {
 		return
 	}
@@ -150,10 +155,10 @@ func GetVersions(c *gin.Context) {
 }
 
 func GetBuilds(c *gin.Context) {
-	_uuid := c.Param("uuid")
+	uuid := c.Param("uuid")
 	version := c.Param("version")
 
-	bundle, err := models.GetBundleByUID(_uuid)
+	bundle, err := models.GetBundleByUID(uuid)
 	if err != nil {
 		return
 	}
@@ -186,9 +191,9 @@ func GetBuilds(c *gin.Context) {
 }
 
 func GetPlist(c *gin.Context) {
-	_uuid := c.Param("uuid")
+	uuid := c.Param("uuid")
 
-	bundle, err := models.GetBundleByUID(_uuid)
+	bundle, err := models.GetBundleByUID(uuid)
 	if err != nil {
 		return
 	}
@@ -208,9 +213,9 @@ func GetPlist(c *gin.Context) {
 }
 
 func DownloadAPP(c *gin.Context) {
-	_uuid := c.Param("uuid")
+	uuid := c.Param("uuid")
 
-	bundle, err := models.GetBundleByUID(_uuid)
+	bundle, err := models.GetBundleByUID(uuid)
 	if err != nil {
 		return
 	}
