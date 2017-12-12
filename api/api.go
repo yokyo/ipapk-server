@@ -220,8 +220,8 @@ func DownloadAPP(c *gin.Context) {
 		return
 	}
 
-	bundle.UpdateDownload()
+	go bundle.UpdateDownload()
 
 	downloadUrl := conf.AppConfig.ProxyURL() + bundle.GetApp()
-	c.Redirect(http.StatusMovedPermanently, downloadUrl)
+	c.Redirect(http.StatusFound, downloadUrl)
 }
