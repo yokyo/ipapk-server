@@ -10,6 +10,7 @@ import (
 var AppConfig *Config
 
 type Config struct {
+	Tls		 bool   `json:"tls"`
 	Host     string `json:"host"`
 	Port     string `json:"port"`
 	Proxy    string `json:"proxy"`
@@ -25,6 +26,15 @@ func InitConfig(filename string) error {
 	if err := json.Unmarshal(data, &AppConfig); err != nil {
 		return err
 	}
+	// Print out for tip
+	AppConfig.Print()
+
+	return nil
+}
+
+func (c *Config)Print() error {
+	fmt.Printf(" Tls:%v\n Host: %v\n Port: %v\n Proxy: %v\n Database: %v\n",
+		c.Tls, c.Host, c.Port, c.Proxy, c.Database)
 	return nil
 }
 

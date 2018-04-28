@@ -64,7 +64,14 @@ func main() {
 	}
 
 	go func() {
-		if err := srv.ListenAndServeTLS(".ca/mycert1.cer", ".ca/mycert1.key"); err != nil {
+		//if err := srv.ListenAndServeTLS(".ca/mycert1.cer", ".ca/mycert1.key"); err != nil {
+		var err error = nil
+		if conf.AppConfig.Proxy == "" {  // which means no proxy present.
+			err = srv.ListenAndServeTLS(".ca/mycert1.cer", ".ca/mycert1.key")
+		} else {
+			err = srv.ListenAndServe()   // use http if behind a proxy
+		}
+		if nil != err {
 			log.Printf("listen: %v\n", err)
 		}
 	}()

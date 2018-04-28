@@ -23,11 +23,13 @@ func Upload(c *gin.Context) {
 	changelog := c.PostForm("changelog")
 	file, err := c.FormFile("file")
 	if err != nil {
+		fmt.Println("ERROR: FormFile")
 		return
 	}
 
 	ext := models.BundleFileExtension(filepath.Ext(file.Filename))
 	if !ext.IsValid() {
+		fmt.Println("ERROR: BundleFileExtension")
 		return
 	}
 
@@ -39,15 +41,18 @@ func Upload(c *gin.Context) {
 	filename := utils.GetAppPath(uuid + string(ext.PlatformType().Extention()))
 
 	if err := c.SaveUploadedFile(file, filename); err != nil {
+		fmt.Println("ERROR: SaveUploadedFile - ")
 		return
 	}
 
 	app, err := ipapk.NewAppParser(filename)
 	if err != nil {
+		fmt.Println("ERROR: NewAppParser")
 		return
 	}
 
 	if err := utils.SaveIcon(app.Icon, uuid+".png"); err != nil {
+		fmt.Println("ERROR: SaveIcon")
 		return
 	}
 
@@ -62,6 +67,7 @@ func Upload(c *gin.Context) {
 	bundle.ChangeLog = changelog
 
 	if err := models.AddBundle(bundle); err != nil {
+		fmt.Println("ERROR: AddBundle")
 		return
 	}
 
